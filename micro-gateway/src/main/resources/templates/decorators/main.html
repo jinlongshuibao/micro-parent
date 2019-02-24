@@ -1,0 +1,27 @@
+<#import "/spring.ftl" as spring/>
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8"/>
+
+    <meta name="viewport" content="width=device-width,user-scalable=no"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    
+
+    <title><sitemesh:write property='title'/></title>
+
+    <link href="${rc.contextPath}/resources/bootstrap.min.css" rel="stylesheet"/>
+    <decorator:head/>
+    <sitemesh:write property='head'/>
+
+</head>
+<body class="container">
+<div>
+    <div>
+        <decorator:body/>
+        <sitemesh:write property='body'/>
+    </div>
+    
+</div>
+</body>
+</html>

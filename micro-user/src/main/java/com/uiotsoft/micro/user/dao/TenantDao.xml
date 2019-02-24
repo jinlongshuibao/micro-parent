@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <!--命名空间，指定对应的Dao-->
+    <mapper namespace="com.uiotsoft.micro.user.dao.TenantDao">
+
+	<!-- 添加租户类型 -->
+	<insert id="insertTenantType" parameterType="TenantType" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO user_tenant_type( 
+			NAME,
+			CODE
+		)VALUES(
+			#{name},
+			#{code}
+		)
+	</insert>
+	<!-- 删除租户类型 -->
+	<delete id="deleteTenantType">
+		DELETE FROM user_tenant_type WHERE CODE=#{code}
+	</delete>
+	<!-- 解绑租户类型和角色类型关系 -->
+	<delete id="unbindRoleOfTT">
+        DELETE FROM user_tenant_type_role 
+        WHERE 
+            TENANT_TYPE_CODE = #{tenantTypeCode} 
+            AND ROLE_CODE = #{roleCode}
+	</delete>
+	
+	<!-- 添加租户类型角色 -->
+	<insert id="insertTenantRoles" >
+		INSERT INTO user_tenant_type_role (
+			TENANT_TYPE_CODE,
+			ROLE_CODE
+		)VALUES
+		<foreach collection="roles" item="item" index="index" separator="," >
+	            (#{tenantType.code}, #{item.roleCode})
+	    </foreach>
+	</insert>
+	<!-- 删除租户类型角色 -->
+	<delete id="deleteTenantTypeRoles">
+		DELETE FROM user_tenant_type_role WHERE TENANT_TYPE_CODE=#{code}
+	</delete>
+	<!-- 获取租户类型角色 -->
+	<select id="selectTenantTypeRoles" resultType="tenantTypeRole">
+		SELECT 
+			ROLE_CODE AS roleCode
+		FROM user_tenant_type_role WHERE TENANT_TYPE_CODE= #{code}
+	</select>
+	<!-- 修改租户类型 -->
+	<update id="updateTenantType">
+		UPDATE user_tenant_type SET 
+			`NAME`=#{tenantType.name}
+		WHERE CODE=#{tenantType.code}
+	</update>
+	<!-- 获取所有租户类型 -->
+	<select id="selectTenantTypes" resultType="tenantType">
+		SELECT * FROM user_tenant_type
+	</select>
+	<!-- 根据租户类型编码查询租户类型 -->
+	<select id="selectTenantTypeByCode" resultType="tenantType">
+		SELECT * FROM user_tenant_type
+		WHERE CODE=#{code}
+	</select>
+	<!-- 根据租户类型id查询租户类型 -->
+    <select id="selectTenantTypeById" resultType="tenantType">
+        SELECT * FROM user_tenant_type
+        WHERE id=#{id}
+    </select>
+    
+    <!-- 绑定租户类型code和角色code -->
+    <insert id="bindRoleTypeOfTT">
+        INSERT INTO user_tenant_type_role(TENANT_TYPE_CODE, ROLE_CODE) 
+        VALUE(#{tenantTypeCode}, #{roleCode})
+    </insert>
+    
+	<!-- 添加租户 -->
+	<insert id="insertTenant" parameterType="tenant" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO user_tenant (
+			NAME,
+			TENANT_TYPE_CODE
+		) VALUES(
+			#{name},
+			#{tenantTypeCode}
+		)
+	</insert>
+	<!-- 删除租户 -->
+	<delete id="deleteTenant">
+		DELETE FROM user_tenant WHERE ID=#{id}
+	</delete>
+	<!-- 删除租户内角色 -->
+	<delete id="deleteTenantRoleByTenantId">
+		DELETE FROM user_tenant_role WHERE TENANT_ID=#{id}
+	</delete>
+	<!-- 删除该租户的账号 -->
+	<delete id="deleteTenantAccountByTenantId">
+		DELETE FROM user_tenant_account WHERE TENANT_ID=#{id}
+	</delete>
+	<!-- 修改租户 -->
+	<update id="updateTenant">
+		UPDATE user_tenant SET 
+			`NAME`=#{tenant.name}
+		WHERE ID=#{tenant.id}
+	</update>
+	<!-- 根据租户ID查询租户 -->
+	<select id="selectTenantById" resultType="tenant">
+		SELECT
+		 	*
+		FROM user_tenant
+		WHERE ID=#{id}
+	</select>
+	<!-- 根据租户名称查询租户 -->
+	<select id="selectTenantByName" resultType="tenant">
+	   SELECT
+            *
+        FROM user_tenant
+        WHERE name=#{name} 
+	</select>
+	
+	<!-- 根据租户ID列表查询多租户 -->
+	<select id="selectTenantByIds" resultType="tenant">
+		SELECT
+			ID AS id,
+		 	NAME AS name,
+		 	TENANT_TYPE_CODE AS tenantTypeCode
+		FROM user_tenant
+		<if test="ids != null and ids.length>0">
+			WHERE ID in
+			<foreach collection="ids" item="item" index="index" open="(" separator="," close=")">
+	            (#{item})
+	    	</foreach>
+		</if>
+	</select>
+	<!-- 根据用户名查询租户信息列表 -->
+	<select id="selectTenantByUsername" resultType="tenant">
+		SELECT 
+			C.ID AS id,
+			C.NAME AS name, 
+			C.TENANT_TYPE_CODE AS tenantTypeCode 
+		FROM user_tenant_account A 
+		JOIN user_account B ON A.ACCOUNT_ID=B.ID
+		JOIN user_tenant C ON A.TENANT_ID=C.ID
+		WHERE B.USERNAME=#{username}
+	</select>
+	<!-- 根据用户名和租户类型查询租户信息列表 -->
+	<select id="selectTenantByUsernameAndTenantType" resultType="tenant">
+		SELECT 
+			C.ID AS id,
+			C.NAME AS name, 
+			C.TENANT_TYPE_CODE AS tenantTypeCode 
+		FROM user_tenant_account A 
+		JOIN user_account B ON A.ACCOUNT_ID=B.ID
+		JOIN user_tenant C ON A.TENANT_ID=C.ID
+		WHERE B.USERNAME=#{username}
+		      AND C.TENANT_TYPE_CODE=#{code}
+	</select>
+    <!-- 根据租户类型查询租户 -->
+    <select id="selectTenantByTenantType" resultType="tenant">
+        SELECT * FROM user_tenant WHERE tenant_type_code = #{code}
+    </select>
+	
+	<!-- 分页查询租户列表 -->
+    <select id="pageTenantByConditions" resultType="tenant">
+        SELECT * FROM user_tenant 
+        <where>
+        	<if test="query.name != null and query.name != ''">
+        		and name like CONCAT(CONCAT('%',#{query.name},'%'))
+        	</if>
+        	<if test="query.tenantTypeCode != null and query.tenantTypeCode != ''">
+        		and TENANT_TYPE_CODE = #{query.tenantTypeCode}
+        	</if>
+        </where>
+        order by id desc
+        limit ${page.startRow} , ${page.limit}
+    </select>
+    
+    <select id="countTenantByConditions" resultType="long">
+        SELECT count(1) FROM user_tenant 
+        <where>
+        	<if test="query.name != null and query.name != ''">
+        		and name like CONCAT(CONCAT('%',#{query.name},'%'))
+        	</if>
+        	<if test="query.tenantTypeCode != null and query.tenantTypeCode != ''">
+        		and TENANT_TYPE_CODE = #{query.tenantTypeCode}
+        	</if>
+        </where>
+    </select>
+
+	<!-- 添加租户内角色 -->
+	<insert id="insertTenantRole">
+		INSERT INTO user_tenant_role (
+			TENANT_ID,
+			ROLE_CODE
+		)VALUES(
+			#{tenantId},
+			#{role.code}
+		)
+	</insert>
+	<!-- 删除租户内角色 -->
+	<delete id="deleteTenantRole">
+		DELETE FROM user_tenant_role WHERE TENANT_ID=#{tenantId} and ROLE_CODE=#{roleCode}
+	</delete>
+	<!-- 查询租户角色列表 -->
+	<select id="selectTenantRoles" resultType="tenantRole">
+		SELECT * FROM user_tenant_role WHERE TENANT_ID=#{tenantId}
+	</select>
+	
+</mapper>

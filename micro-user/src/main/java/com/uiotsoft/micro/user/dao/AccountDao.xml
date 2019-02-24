@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <!--命名空间，指定对应的Dao-->
+    <mapper namespace="com.uiotsoft.micro.user.dao.AccountDao">
+    
+    <!-- 添加账号 -->
+    <insert id="insertAccount"  parameterType="account" useGeneratedKeys="true" keyProperty="id">
+    	INSERT INTO user_account
+    	<trim prefix="(" suffix=")" suffixOverrides="," >
+    		<if test="username != null" >
+        		USERNAME,
+      		</if>
+      		<if test="areaCode != null" >
+        		AREA_CODE,
+      		</if>
+      		<if test="mobile != null" >
+        		MOBILE,
+      		</if>
+      		<if test="password != null" >
+        		PASSWORD,
+      		</if>
+      		<if test="salt != null" >
+        		SALT,
+      		</if>
+    	</trim>
+    	<trim prefix="values (" suffix=")" suffixOverrides="," >
+    		<if test="username != null and username != ''" >
+        		#{username},
+      		</if>
+      		<if test="areaCode != null and areaCode != ''" >
+        		#{areaCode},
+      		</if>
+      		<if test="mobile != null and mobile != ''" >
+        		#{mobile},
+      		</if>
+      		<if test="password != null and password != ''" >
+        		#{password},
+      		</if>
+      		<if test="salt != null and salt != ''" >
+        		#{salt},
+      		</if>
+    	</trim>
+    </insert>
+    
+    <!-- 添加账号租户关系 -->
+	<insert id="insertAccountTenant">
+		INSERT INTO user_tenant_account (
+			ACCOUNT_ID,
+			TENANT_ID
+		)VALUES
+		<foreach collection="list" item="item" index="index" separator="," >
+	            (#{account.id}, #{item.id})
+	    </foreach>
+	</insert>
+	
+	<select id="selectAccountTenantId" resultType="accountTenant">
+		SELECT
+		 	ID AS id,
+		 	ACCOUNT_ID AS accountId,
+		 	TENANT_ID AS tenantId
+		FROM user_tenant_account 
+		WHERE ACCOUNT_ID=#{accountId} 
+			AND TENANT_ID=#{tenantId}
+	</select>
+	
+	<!-- 添加账号租户关系 -->
+	<insert id="insertAccountTenantId">
+		INSERT INTO user_tenant_account (
+			ACCOUNT_ID,
+			TENANT_ID
+		)VALUES(
+			#{accountId},
+			#{tenantId}
+		)
+	</insert>
+	
+	<!-- 删除账号租户关系 -->
+	<delete id="deleteAccountTenantId">
+		DELETE FROM user_tenant_account WHERE ACCOUNT_ID=#{accountId} AND TENANT_ID=#{tenantId}
+	</delete>
+	
+    <!-- 删除账号 -->
+    <update id="deleteAccount">
+    	UPDATE user_account SET 
+    		IS_DEL = 1 
+    	WHERE USERNAME=#{username}
+    </update>
+    
+    <!-- 真实删除账号 -->
+    <delete id="deleteAccountIrrevocably">
+        DELETE FROM user_account
+        WHERE USERNAME=#{username}
+    </delete>
+    
+    <!-- 修改账号密码 -->
+    <update id="updateAccountPassword">
+    	UPDATE user_account SET 
+    		PASSWORD = #{params.newPassword} 
+    	WHERE USERNAME=#{params.username}
+    </update>
+    
+    <!-- 修改手机号 -->
+    <update id="updateAccountMobile">
+    	UPDATE user_account SET 
+    		MOBILE = #{params.mobile} 
+    	WHERE USERNAME=#{params.username}
+    </update>
+    
+    <select id="selectAccountByUsernameIgnoreDel" resultType="account">
+        SELECT * FROM user_account 
+        WHERE USERNAME=#{username}
+    </select>
+    
+    <!-- 根据用户名查询账号信息 -->
+    <select id="selectAccountByUsername" resultType="account">
+        SELECT * FROM user_account 
+        WHERE USERNAME=#{username}
+            AND IS_DEL = 0
+    </select>
+    
+    <!-- 根据用户名列表查询账号信息列表 -->
+    <select id="queryAccount" resultType="account">
+        SELECT * FROM user_account 
+        <if test="usernames != null and usernames.length>0">
+	        WHERE 
+	           USERNAME in
+		       <foreach collection="usernames" item="item" index="index" open="(" separator="," close=")" >
+		           #{item}
+		       </foreach>
+	           AND IS_DEL = 0
+        </if>
+    </select>
+    
+	<!-- 根据手机号查询账号信息 -->
+    <select id="selectAccountByMobile" resultType="account">
+        SELECT * FROM user_account 
+        WHERE MOBILE=#{mobile}
+            AND IS_DEL = 0
+    </select>
+    
+    <!-- 根据条件分页查询账号信息 -->
+    <select id="pageAccountByConditions" resultType="account">
+        SELECT * FROM user_account A LEFT JOIN user_tenant_account B ON A.ID=B.ACCOUNT_ID
+        <where>
+        	<if test="params.username != null and params.username != '' ">
+	        	and A.USERNAME LIKE concat("%", #{params.username}, "%") 
+	        </if>
+	        <if test="params.mobile != null and params.mobile != '' ">
+	        	and A.MOBILE LIKE concat("%", #{params.mobile}, "%") 
+	        </if>
+	        <if test="params.tenantId != null and params.tenantId != '' ">
+	        	and B.TENANT_ID = #{params.tenantId}
+	        </if>
+	        AND A.IS_DEL = 0
+        </where>
+        <if test="page.startRow > -1" >
+		      limit ${page.startRow} , ${page.limit}
+		</if>
+    </select>
+    
+    <!-- 根据条件统计账号数量 -->
+    <select id="countAccountByConditions" resultType="Long">
+        SELECT count(*) FROM user_account A LEFT JOIN user_tenant_account B ON A.ID=B.ACCOUNT_ID
+        <where>
+        	<if test="params.username != null and params.username != ''">
+	        	and A.USERNAME LIKE concat("%", #{params.username}, "%") 
+	        </if>
+	        <if test="params.mobile != null and params.mobile != '' ">
+	        	and A.MOBILE LIKE concat("%", #{params.mobile}, "%") 
+	        </if>
+	        <if test="params.tenantId != null and params.tenantId != ''">
+	        	and B.TENANT_ID = #{params.tenantId}
+	        </if>
+	        AND A.IS_DEL = 0
+        </where>
+    </select>
+    
+    <!-- 根据用户名查询账号信息 -->
+    <select id="selectTenantsByAccountId" resultType="tenant">
+    	SELECT 
+			B.ID AS id, 
+			B.`NAME` AS name,
+			B.TENANT_TYPE_CODE AS tenantTypeCode
+		FROM user_tenant_account A JOIN user_tenant B ON A.TENANT_ID=B.ID 
+		WHERE A.ACCOUNT_ID=#{accountId}
+    </select>
+</mapper>

@@ -1,0 +1,24 @@
+server: 
+  port: 53030
+  
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: http://devl.unisiot.com:53000/eureka/
+
+spring:
+##################### DB #####################
+  datasource: 
+    url: jdbc:mysql://a.unisiot.com:3306/uiot_micro_resource?useUnicode=true&amp;characterEncoding=UTF-8&amp;zeroDateTimeBehavior=convertToNull
+    username: a
+    password: a
+    
+
+            
+logging: 
+  config: classpath:log4j2-dev.xml
+  
+swagger: 
+  enable: true
+
+

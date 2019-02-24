@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/micro-api/micro-api.iml" filepath="$PROJECT_DIR$/micro-api/micro-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/micro-authorization/micro-authorization.iml" filepath="$PROJECT_DIR$/micro-authorization/micro-authorization.iml" />
+      <module fileurl="file://$PROJECT_DIR$/micro-common/micro-common.iml" filepath="$PROJECT_DIR$/micro-common/micro-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/micro-discovery/micro-discovery.iml" filepath="$PROJECT_DIR$/micro-discovery/micro-discovery.iml" />
+      <module fileurl="file://$PROJECT_DIR$/micro-gateway/micro-gateway.iml" filepath="$PROJECT_DIR$/micro-gateway/micro-gateway.iml" />
+      <module fileurl="file://$PROJECT_DIR$/micro-parent.iml" filepath="$PROJECT_DIR$/micro-parent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/micro-resource/micro-resource.iml" filepath="$PROJECT_DIR$/micro-resource/micro-resource.iml" />
+      <module fileurl="file://$PROJECT_DIR$/micro-user/micro-user.iml" filepath="$PROJECT_DIR$/micro-user/micro-user.iml" />
+    </modules>
+  </component>
+</project>

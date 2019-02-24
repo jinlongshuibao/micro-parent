@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="micro-api" />
+        <module name="micro-authorization" />
+        <module name="micro-common" />
+        <module name="micro-discovery" />
+        <module name="micro-gateway" />
+        <module name="micro-resource" />
+        <module name="micro-user" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="micro-api" target="1.8" />
+      <module name="micro-authorization" target="1.8" />
+      <module name="micro-common" target="1.8" />
+      <module name="micro-discovery" target="1.8" />
+      <module name="micro-gateway" target="1.8" />
+      <module name="micro-parent" target="1.8" />
+      <module name="micro-resource" target="1.8" />
+      <module name="micro-user" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

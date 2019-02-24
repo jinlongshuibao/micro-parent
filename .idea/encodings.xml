@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/micro-api" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/micro-authorization" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/micro-common" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/micro-discovery" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/micro-gateway" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/micro-resource" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/micro-user" charset="UTF-8" />
+  </component>
+</project>

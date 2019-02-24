@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <!--命名空间，指定对应的Dao-->
+    <mapper namespace="com.uiotsoft.micro.authorization.dao.AuthorizationDao">
+    
+    <!-- 根据权限组id查询子权限 -->
+    <select id="queryChildrenPrivilege" resultType="PrivilegeEntity">
+        SELECT * 
+        FROM authorization_privilege
+        WHERE privilege_group_id = #{id}
+    </select>
+    
+    <!-- 根据权限组id查询子权限组 -->
+    <select id="queryChildPG" resultType="PrivilegeGroupEntity">
+        SELECT * 
+        FROM authorization_privilege_group
+        WHERE parent_id = #{id}
+    </select>
+    
+    <!-- 通过id查询权限组 -->
+    <select id="queryPG" resultType="PrivilegeTreeEntity">
+        SELECT 
+            id, PARENT_ID AS parentId, NAME, SORT, TRUE as isGroup
+		FROM
+		    authorization_privilege_group
+    </select>
+    
+    <!-- 通过角色code查询权限 -->
+    <select id="queryPTByRC" resultType="PrivilegeTreeEntity">
+        SELECT
+		    code AS id,
+		    name,
+		    privilege_group_id as parentId,
+		    status,
+		    FALSE as isGroup
+		FROM
+		    authorization_privilege
+		<where>
+		  <if test="roleCodes != null">
+		  id IN (
+            
+                SELECT
+                    PRIVILEGE_ID
+                FROM
+                    authorization_role_privilege
+                WHERE
+                    role_id IN (
+                    
+                        SELECT
+                            id
+                        FROM
+                            authorization_role
+                        WHERE
+                            CODE IN (
+                                <foreach collection="roleCodes" item="code" separator=",">
+                                    #{code}
+                                </foreach>
+                            )
+                    )
+            )
+            </if>
+		</where>
+		    
+    </select>
+    
+    <!-- 查询该owner对应的role的list -->
+    <select id="queryRoleOfOwner" resultType="roleEntity">
+        SELECT *
+        FROM authorization_role
+        WHERE code IN(
+            SELECT role_code 
+            FROM authorization_owner_role
+            WHERE owner = #{owner}
+        )
+    </select>
+    
+    <!-- 通过roleid查找每个role对应的权限List -->
+    <select id="queryPrivilegesOfRole" resultType="String">
+        SELECT
+		    CODE
+		FROM
+		    authorization_privilege
+		WHERE
+		    id IN (
+		        SELECT
+		            privilege_id
+		        FROM
+		            authorization_role_privilege
+		        WHERE
+		            role_id = #{id}
+		    )
+    </select>
+    
+    <!-- 通过owner删除owner_role关系 -->
+    <delete id="removeOwner_role">
+        DELETE FROM authorization_owner_role
+        WHERE owner = #{owner}
+    </delete>
+    
+    <!-- 通过owner查询对应的role -->
+    <select id="queryOwner_role" resultType="string">
+        SELECT role_code
+        FROM authorization_owner_role
+        WHERE owner = #{owner}
+    </select>
+    
+    <!-- 解绑角色 -->
+    <delete id="unbind">
+        DELETE FROM 
+            authorization_owner_role
+        WHERE 
+            owner = #{owner} AND role_code IN
+            <foreach collection="roleCodes" open="(" close=")" 
+                    separator="," item="roleCode">
+                #{roleCode}
+            </foreach>
+    </delete>
+    
+    <!-- 绑定角色至拥有者 -->
+    <insert id="bind">
+        INSERT INTO authorization_owner_role(owner, role_code)
+        VALUES
+            <foreach collection="roleCodes" open="(" close=")" 
+                    separator="),(" item="roleCode">
+                #{owner}, #{roleCode}
+            </foreach>
+    </insert>
+    
+    <!-- 条件查询角色总数 -->
+    <select id="countRoleByConditions" resultType="long">
+        SELECT COUNT(1) 
+        FROM authorization_role
+        <where>
+            <if test="query.name != null">
+                AND NAME LIKE (CONCAT('%',#{query.name},'%'))
+            </if>
+            <if test="query.code != null">
+                AND CODE = #{query.code}
+            </if>
+        </where>
+    </select>
+    
+    <!-- 分页查询角色列表(不包含权限) -->
+    <select id="pageRoleByConditions" resultType="roleEntity">
+        SELECT * FROM authorization_role
+        <where>
+            <if test="query.name != null">
+                AND NAME LIKE (CONCAT('%',#{query.name},'%'))
+            </if>
+            <if test="query.code != null">
+                AND CODE = #{query.code}
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT ${page.startRow} , ${page.limit}
+    </select>
+    
+    <select id="queryO_Role" resultType="String">
+        SELECT owner from authorization_owner_role
+        WHERE role_code IN
+         <foreach collection="array" 
+                 open="(" close=")" separator="," item="code">
+             #{code}
+         </foreach>
+    </select>
+    
+    <delete id="removeRole_pri">
+        DELETE FROM authorization_role_privilege
+        <where>
+            role_id IN
+            <foreach collection="roles" item="role" 
+                open="(" close=")" separator=",">
+                #{role.id}    
+            </foreach>
+        </where>
+    </delete>
+    
+    <!-- 根据角色id批量删除角色 -->
+    <delete id="removeRolesByIds" >
+        DELETE FROM authorization_role
+        <where>
+            id IN
+            <foreach collection="roles" item="role" 
+                open="(" close=")" separator=",">
+                #{role.id}    
+            </foreach>
+        </where>
+    </delete>
+    
+    <!-- 根据code批量查询角色id -->
+    <select id="queryRolesByCodes" resultType="roleEntity">
+        SELECT * 
+        FROM  authorization_role
+        <where>
+            code IN
+            <foreach collection="array" item="code" 
+                open="(" close=")" separator=",">
+                #{code}
+            </foreach>
+        </where>
+    </select>
+    
+    <!-- 修改角色信息 -->
+    <update id="modifyRole">
+        UPDATE authorization_role
+        SET name = #{role.name}
+        WHERE code = #{role.code}
+    </update>
+    
+    <!-- 根据roleid删除role-privilege关系 -->
+    <delete id="removePrivilegesByRoleId" >
+        DELETE FROM authorization_role_privilege
+        WHERE role_id = #{id}
+    </delete>
+    
+    <!-- 查询角色（添加修改判断重复） -->
+    <select id="selectRoleByCode" resultType="roleEntity">
+        SELECT * 
+        FROM authorization_role 
+        where code = #{code}
+    </select>
+    
+    <!-- 创建角色 -->
+    <insert id="createRole" parameterType="RoleEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO authorization_role (
+        	name, 
+        	code
+        )VALUE(
+        	#{name}, 
+        	#{code}
+        )
+    </insert>
+    
+    <!-- 通过id查询角色 -->
+    <select id="selectRoleById" resultType="roleEntity">
+        SELECT
+         *
+        FROM authorization_role
+        WHERE id = #{id}
+    </select>
+    
+    <!-- 角色id绑定权限id -->
+    <insert id="roleBindPrivilege">
+        INSERT INTO 
+            authorization_role_privilege(role_id, privilege_id)
+        VALUES 
+            <foreach collection="privileges" open="(" close=")" 
+                separator="),(" item="p">
+                #{roleId}, #{p.id}
+            </foreach>
+    </insert>
+    
+    <!-- 权限编码数组查询一组权限 -->
+    <select id="queryPrivilegesByCodearray" resultType="PrivilegeEntity">
+        SELECT * 
+        FROM authorization_privilege
+        WHERE code IN 
+            <foreach collection="pCodes" open="(" close=")" 
+                separator="," item="code">
+                #{code}
+            </foreach>   
+    </select>
+    
+    <!-- 通过一组权限对象（其中的编码）查询权限 -->
+    <select id="queryPrivileges" resultType="PrivilegeEntity">
+        SELECT * 
+        FROM authorization_privilege
+        WHERE code IN 
+            <foreach collection="list" open="(" close=")" 
+                separator="," item="privilege">
+                #{privilege.code}
+            </foreach>
+    </select>
+    
+    <!-- 通过角色编码查询角色 -->
+    <select id="queryRole" resultType="roleEntity">
+        SELECT * 
+        FROM authorization_role
+        WHERE CODE = #{roleCode}
+    </select>
+    
+    <!-- 通过角色id查询角色权限 -->
+    <select id="queryRolePrivilege" resultType="PrivilegeEntity">
+        SELECT * 
+        FROM authorization_privilege
+        WHERE id IN
+            (SELECT privilege_id 
+            FROM authorization_role_privilege 
+            WHERE role_id = #{roleId})
+    </select>
+    
+    <!-- 分页查询权限 -->
+    <select id="pagePrivilegeByConditions" resultType="privilegeEntity">
+        SELECT * FROM authorization_privilege
+        <where>
+            <if test="query.name != null">
+                AND NAME LIKE (CONCAT('%',#{query.name},'%'))
+            </if>
+            <if test="query.privilegeGroupId != null">
+                AND PRIVILEGE_GROUP_ID = #{query.privilegeGroupId}
+            </if>
+            <if test="query.code != null">
+                AND CODE = #{query.code}
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT ${page.startRow} , ${page.limit}
+    </select>
+    
+    <!-- 条件查询权限总数 -->
+    <select id="countePrivilegeByConditions" resultType="long">
+        SELECT COUNT(1) 
+        FROM authorization_privilege
+        <where>
+            <if test="query.name != null">
+                AND NAME LIKE (CONCAT('%',#{query.name},'%'))
+            </if>
+            <if test="query.privilegeGroupId != null">
+                AND PRIVILEGE_GROUP_ID = #{query.privilegeGroupId}
+            </if>
+            <if test="query.code != null">
+                AND CODE = #{query.code}
+            </if>
+        </where>
+    </select>
+    
+    <!-- 通过一组权限编码删除权限  -->
+    <delete id="removePrivilege">
+        DELETE FROM 
+            authorization_privilege
+        WHERE 
+            code IN 
+            <foreach collection="array" 
+                    open="(" close=")" separator="," item="code">
+                #{code}
+            </foreach>
+            
+    </delete>
+    
+    <select id="queryR_Pri" resultType="Integer">
+        SELECT role_id 
+        FROM authorization_role_privilege 
+        WHERE 
+            privilege_id IN(
+	            SELECT id FROM authorization_privilege 
+	            WHERE code IN
+		            <foreach collection="array" 
+		                    open="(" close=")" separator="," item="code">
+		                #{code}
+		            </foreach>
+            )
+    </select>
+    
+    <!-- 新增权限组 的 查询重复判断 -->
+    <select id="selectPrivilegeGroupByName" resultType="privilegeGroupEntity">
+        SELECT * 
+        FROM authorization_privilege_group 
+        WHERE name = #{name} 
+    </select>
+    
+	<!-- 新增权限组 -->
+    <insert id="createPrivilegeGroup" parameterType="PrivilegeGroupEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO authorization_privilege_group (
+        	PARENT_ID, 
+        	NAME, 
+        	SORT
+        ) VALUE (
+        	#{parentId}, 
+            #{name},
+            #{sort}
+        )
+    </insert>
+    
+    <!-- 修改权限组 -->
+    <update id="modifyPrivilegeGroup">
+        UPDATE 
+            authorization_privilege_group
+        SET 
+            NAME = #{pg.name},SORT = #{pg.sort}
+        WHERE
+            ID = #{pg.id}
+    </update>
+    
+    <!-- 删除权限组 -->
+    <delete id="removePrivilegeGroup">
+        DELETE FROM
+            authorization_privilege_group
+        WHERE
+            ID = #{id}
+    </delete>
+    
+    <!-- 根据id查询权限组 -->
+    <select id="queryPrivilegeGroup" resultType="privilegeGroupEntity">
+        SELECT * 
+        FROM authorization_privilege_group
+        WHERE ID = #{id}
+    </select>
+
+    <!-- 获取所有权限组 -->
+    <select id="queryAllPrivilegeGroup" resultType="privilegeGroupEntity">
+        SELECT * FROM authorization_privilege_group
+    </select>
+    
+    <!-- 根据name查询权限（添加修改时判断重复） -->
+    <select id="selectPrivilegeEntityByName" resultType="privilegeEntity">
+        SELECT * 
+        FROM authorization_privilege 
+        WHERE name = #{name} 
+    </select>
+     
+    <!-- 新增权限 -->
+    <insert id="createPrivilege" parameterType="PrivilegeEntity" 
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO authorization_privilege (
+        	NAME, 
+        	CODE, 
+        	PRIVILEGE_GROUP_ID, 
+        	STATUS
+        )VALUE(
+       		#{name}, 
+       		#{code}, 
+       		#{privilegeGroupId}, 
+       		#{status}
+       	)
+    </insert>
+    
+    <!-- 通过id查询权限 -->
+    <select id="selectPrivilegeById" resultType="PrivilegeEntity">
+        SELECT * 
+        FROM authorization_privilege
+        WHERE id = #{id}
+    </select>
+    
+    <!-- 修改权限 -->
+    <update id="modifyPrivilege" >
+        UPDATE authorization_privilege SET 
+        	NAME = #{pe.name}, 
+        	PRIVILEGE_GROUP_ID = #{pe.privilegeGroupId}, 
+        	STATUS = #{pe.status}
+        WHERE code = #{pe.code}
+    </update>
+    
+    <!-- 根据权限编码获取权限 -->
+    <select id="queryPrivilege" resultType="privilegeEntity">
+        SELECT
+        	 * 
+        FROM authorization_privilege
+        WHERE CODE = #{privilegeCode}
+    </select>
+</mapper>

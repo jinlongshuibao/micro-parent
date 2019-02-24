@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <!--命名空间，指定对应的Dao-->
+    <mapper namespace="com.uiotsoft.micro.resource.dao.MenuDao">
+	
+	<!-- 判断是否有子节点 -->
+	<select id="selectChildMenu" resultType="menu">
+	   SELECT * 
+	   FROM resource_menu 
+	   WHERE parent_id = #{id}
+	</select>
+	
+	<!-- 通过code查询 -->
+	<select id="selectMenuByCode" resultType="menu">
+	   SELECT * 
+       FROM resource_menu 
+       WHERE code = #{code}
+	</select>
+	
+	<!-- 添加菜单 -->
+	<insert id="insertMenu">
+		INSERT INTO resource_menu (
+			PARENT_ID,
+			TITLE,
+			URL,
+			CODE,
+			ICON,
+			SORT,
+			COMMENT,
+			STATUS,
+			APPLICATION_CODE,
+			PRIVILEGE_CODE
+		) VALUES (
+			#{menu.parentId},
+			#{menu.title},
+			#{menu.url},
+			#{menu.code},
+			#{menu.icon},
+			#{menu.sort},
+			#{menu.comment},
+			#{menu.status},
+			#{menu.applicationCode},
+			#{menu.privilegeCode}
+			);
+	</insert>
+
+	<!-- 修改菜单 -->
+	<update id="updateMenu">
+		UPDATE resource_menu  
+	    <set>  
+	    	PARENT_ID = #{menu.parentId},  
+	    	TITLE = #{menu.title},
+	    	APPLICATION_CODE = #{menu.applicationCode},
+	    	<if test="menu.privilegeCode != null and menu.privilegeCode != '' ">  
+	    	    PRIVILEGE_CODE = #{menu.privilegeCode},  
+	    	</if>
+	    	<if test="menu.url != null and menu.url != '' ">   
+                URL = #{menu.url},  
+            </if>
+	        <if test="menu.icon != null and menu.icon != '' ">  
+	            ICON = #{menu.icon},   
+	        </if>  
+	        <if test="menu.sort != null and menu.sort != '' ">  
+	            SORT = #{menu.sort},   
+	        </if>  
+			<if test="menu.comment != null and menu.comment != '' ">  
+	            COMMENT = #{menu.comment},    
+	        </if>  
+	        <if test="menu.status != null ">  
+	            STATUS = #{menu.status}
+	        </if>  
+	    </set>  
+	    WHERE id = #{menu.id};    
+	</update>
+	
+	<!-- 删除菜单 -->
+	<delete id="deleteMenu">
+		DELETE FROM resource_menu WHERE id = #{id};    
+	</delete>
+	
+	<!-- 根据ID查询菜单 -->
+	<select id="selectMenuById" resultType="menu">
+		SELECT * FROM resource_menu WHERE id = #{id};    
+	</select>
+	
+	<!-- 根据应用编码查询菜单 -->
+	<select id="selectMenuByApplicationCode" resultType="menu">
+		SELECT * FROM resource_menu WHERE APPLICATION_CODE = #{applicationCode};    
+	</select>
+	
+	<!-- 根据条件查询菜单 -->
+	<select id="pageMenuByConditions" resultType="menu">
+		SELECT 
+			B.NAME as application,
+			A.* 
+		FROM resource_menu A LEFT JOIN resource_application B ON A.APPLICATION_CODE=B.CODE
+		<where>
+			<!-- and PARENT_ID IS NOT NULL -->
+			<if test="params.applicationCode != null and params.applicationCode != '' ">
+        		and APPLICATION_CODE = #{params.applicationCode}    
+        	</if>
+        	<if test="params.status != null and params.status != '' ">
+        		and STATUS = #{params.status}    
+        	</if>
+        	<if test="params.title != null and params.title != '' ">
+        		and TITLE like CONCAT('%',#{params.title},'%')
+        	</if>
+        </where>
+        <if test="page.startRow > -1" >
+		      limit ${page.startRow} , ${page.limit}
+		</if>
+	</select>
+	
+	<!-- 根据条件统计菜单数量 -->
+    <select id="countAccountByConditions" resultType="Long">
+        SELECT count(*) FROM resource_menu
+        <where>
+        	and PARENT_ID IS NOT NULL
+        	<if test="params.applicationCode != null and params.applicationCode != '' ">
+        		and APPLICATION_CODE = #{params.applicationCode}    
+        	</if>
+        	<if test="params.status != null and params.status != '' ">
+        		and STATUS = #{params.status}    
+        	</if>
+        	<if test="params.title != null and params.title != '' ">
+        		and TITLE like CONCAT('%',#{params.title},'%')
+        	</if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <!--命名空间，指定对应的Dao-->
+    <mapper namespace="com.uiotsoft.micro.resource.dao.ApplicationDao">
+
+    <!-- 通过code查询 -->
+    <select id="selectApplicationByCode" resultType="application">
+        SELECT * 
+        FROM resource_application
+        WHERE code = #{code}
+    </select>
+    
+    <!-- 通过name查询 -->
+    <select id="selectApplicationByName" resultType="application">
+        SELECT * 
+        FROM resource_application
+        WHERE name = #{name}
+    </select>
+    
+	<!-- 添加应用 -->
+	<insert id="insertApplication">
+		INSERT INTO resource_application (
+			NAME,
+			CODE
+		) VALUES (
+			#{application.name},
+			#{application.code}
+			);
+	</insert>
+	
+	<!-- 修改应用 -->
+	<update id="updateApplication">
+		UPDATE resource_application  
+	    <set>  
+	    	NAME = #{application.name}
+	    </set>  
+	    WHERE CODE = #{application.code};    
+	</update>
+	
+	<!-- 删除应用 -->
+	<delete id="deleteApplication">
+		DELETE FROM resource_application WHERE code = #{applicationCode};    
+	</delete>
+	
+	<select id="pageApplicationByConditions" resultType="application">
+        SELECT * FROM resource_application
+        <if test="params != null and params.name != null">
+            WHERE NAME like CONCAT('%', #{params.name}, '%')
+        </if>
+        limit #{page.startRow},#{page.limit}
+    </select>
+    
+    <select id="countApplicationByConditions" resultType="long">
+        SELECT count(*) FROM resource_application
+        <if test="params != null and params.name != null">
+            WHERE NAME like CONCAT('%', #{params.name}, '%')
+        </if>
+    </select>
+    
+    <select id="selectByCode" resultType="application">
+        SELECT * FROM resource_application WHERE CODE = #{applicationCode}
+    </select>
+
+</mapper>
